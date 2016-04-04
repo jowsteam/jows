@@ -38,20 +38,20 @@
 #include "ns3/flow-monitor-module.h"
 #include "ns3/wifi-module.h"
 #include "device_topology.h"
+#include <vector>
 
 using namespace ns3;
 /// Run single 10 seconds experiment with enabled or disabled RTS/CTS mechanism
 void experiment (bool enableCtsRts)
 {
-/*
-#define N_NODES 9
-    int neigh_matrix[N_NODES][N_NODES] = 
+
+// dirty macro included in device_topology.h
+int neigh_matrix[N_NODES][N_NODES] = 
 // should be triangular matrix with 1 on diagonal, values below diagonal will be ignored
-// TODO: fully implement it
 { 
-{ 1, 1, 1, 1, 1, 1, 0, 0, 0}, // first 3 nodes dont see last 3
-{ 0, 1, 1, 1, 1, 1, 0, 0, 0},
-{ 0, 0, 1, 1, 1, 1, 0, 0, 0},
+{ 1, 1, 1, 0, 0, 0, 0, 0, 0}, // first 3 nodes dont see any other nodes (for now)
+{ 0, 1, 0, 0, 0, 0, 0, 0, 0}, // this gives topology NODE --- AP --- NODE , nodes dont see each other 
+{ 0, 0, 1, 0, 0, 0, 0, 0, 0},
 { 0, 0, 0, 1, 1, 1, 1, 1, 1},
 { 0, 0, 0, 0, 1, 1, 1, 1, 1},
 { 0, 0, 0, 0, 0, 1, 1, 1, 1},
@@ -60,29 +60,31 @@ void experiment (bool enableCtsRts)
 { 0, 0, 0, 0, 0, 0, 0, 0, 1},
 };
 
-*/
     // 0. Enable or disable CTS/RTS
-    UintegerValue ctsThr = (enableCtsRts ? UintegerValue (100) : UintegerValue (2200));
+    UintegerValue ctsThr = (enableCtsRts ? UintegerValue (10) : UintegerValue (2500));
     Config::SetDefault ("ns3::WifiRemoteStationManager::RtsCtsThreshold", ctsThr);
 
-    NodeContainer nodes;
+    NodeContainer nodes1, nodes2, nodes3;
+    std::vector<NodeContainer*> networks;
+// it means there should be 3 networks with 3 nodes each
+    networks = {&nodes1, &nodes2, &nodes3};
+    std::vector<int> nodes_count = {3, 3, 3};
+
     DeviceTopology topo = DeviceTopology();
-    // creates one wifi network with infrastructure (first node is ap)
-    NetDeviceContainer devices = topo.CreateInfra(nodes, 3);
-    // would create ad-hoc network with 3 nodes
-    //NetDeviceContainer devices = topo.Create(nodes, 3);
-    /*
-	TODO:
-	make topology and flows configurable more easily
-	until 8. it should be replaced with something like this:
-	{devices1,devices2,devices3} = topo.createinfra({(nodes1),(nodes2),(nodes3)}, neigh_matrix)
-	
+    // creates wifi networks with infrastructure (first node is ap)
+    std::vector<NetDeviceContainer> devices_v = topo.CreateInfra(networks, nodes_count, neigh_matrix);
+
+/*
+	TODO:add ips and flows for next NetDeviceContainers, make it more configurable
+	something like:
+
 	for d in range(0,3):
-	    assignIP (10.0.d.0,devices(d))
+	    assignIPs (10.0.d.0,devices(d))
 	    Install_cbr_and_echo(nodes(3*d + 1),nodes(3*d),300xMBps, 1400)
 	    Install_cbr_and_echo(nodes(3*d + 2),nodes(3*d),300xMBps, 1400)
 		
     */
+    NetDeviceContainer devices = devices_v[0];
 
     // uncomment the following to have athstats output
     // AthstatsHelper athstats;
@@ -90,7 +92,7 @@ void experiment (bool enableCtsRts)
 
     // 6. Install TCP/IP stack & assign IP addresses
     InternetStackHelper internet;
-    internet.Install (nodes);
+    internet.Install (nodes1);
     Ipv4AddressHelper ipv4;
     ipv4.SetBase ("10.0.0.0", "255.255.255.0");
     ipv4.Assign (devices);
@@ -105,7 +107,7 @@ void experiment (bool enableCtsRts)
     // flow 1:  node 0 -> node 1
     onOffHelper.SetAttribute ("DataRate", StringValue ("3000000bps"));
     onOffHelper.SetAttribute ("StartTime", TimeValue (Seconds (1.000000)));
-    cbrApps.Add (onOffHelper.Install (nodes.Get (1))); 
+    cbrApps.Add (onOffHelper.Install (nodes1.Get (1))); 
 
     // flow 2:  node 2 -> node 1
     /** \internal
@@ -114,7 +116,7 @@ void experiment (bool enableCtsRts)
     */
     onOffHelper.SetAttribute ("DataRate", StringValue ("3001100bps"));
     onOffHelper.SetAttribute ("StartTime", TimeValue (Seconds (1.001)));
-    cbrApps.Add (onOffHelper.Install (nodes.Get (2))); 
+    cbrApps.Add (onOffHelper.Install (nodes1.Get (2))); 
 
     /** \internal
     * We also use separate UDP applications that will send a single
@@ -130,9 +132,9 @@ void experiment (bool enableCtsRts)
 
     // again using different start times to workaround Bug 388 and Bug 912
     echoClientHelper.SetAttribute ("StartTime", TimeValue (Seconds (0.001)));
-    pingApps.Add (echoClientHelper.Install (nodes.Get (1))); 
+    pingApps.Add (echoClientHelper.Install (nodes1.Get (1))); 
     echoClientHelper.SetAttribute ("StartTime", TimeValue (Seconds (0.006)));
-    pingApps.Add (echoClientHelper.Install (nodes.Get (2)));
+    pingApps.Add (echoClientHelper.Install (nodes1.Get (2)));
 
     // 8. Install FlowMonitor on all nodes
     FlowMonitorHelper flowmon;
