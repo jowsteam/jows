@@ -18,7 +18,7 @@ public:
     virtual ~DeviceTopology(){};
     NetDeviceContainer Create(NodeContainer& nodes, int n = 3);
     NetDeviceContainer CreateInfra(NodeContainer& nodes, int n = 3);
-    std::vector<NetDeviceContainer> CreateInfra(std::vector<NodeContainer*> node_vector, std::vector<int> nodes_count,int matrix[N_NODES][N_NODES]);
+    std::vector<NetDeviceContainer> CreateInfra(std::vector<NodeContainer*> node_vector, std::vector<int> nodes_count,int *matrix);
 //    std::vector<NetDeviceContainer> CreateInfra(std::vector<NodeContainer*> node_vector, std::vector<int> nodes_count);
 private:
     int ssid_suffix;

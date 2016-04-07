@@ -44,21 +44,21 @@ using namespace ns3;
 /// Run single 10 seconds experiment with enabled or disabled RTS/CTS mechanism
 void experiment (bool enableCtsRts)
 {
-
-// dirty macro included in device_topology.h
-int neigh_matrix[N_NODES][N_NODES] = 
-// should be triangular matrix with 1 on diagonal, values below diagonal will be ignored
-{ 
-{ 1, 1, 1, 0, 0, 0, 0, 0, 0}, // first 3 nodes dont see any other nodes (for now)
-{ 0, 1, 0, 0, 0, 0, 0, 0, 0}, // this gives topology NODE --- AP --- NODE , nodes dont see each other 
-{ 0, 0, 1, 0, 0, 0, 0, 0, 0},
-{ 0, 0, 0, 1, 1, 1, 1, 1, 1},
-{ 0, 0, 0, 0, 1, 1, 1, 1, 1},
-{ 0, 0, 0, 0, 0, 1, 1, 1, 1},
-{ 0, 0, 0, 0, 0, 0, 1, 1, 1},
-{ 0, 0, 0, 0, 0, 0, 0, 1, 1},
-{ 0, 0, 0, 0, 0, 0, 0, 0, 1},
-};
+    const int nodes_total = 9;
+    std::vector<int> nodes_count = {3, 3, 3};
+    int* neigh_matrix = new int[nodes_total*nodes_total] 
+    // should be triangular matrix with 1 on diagonal, values below diagonal will be ignored, represented in 1D so it is easier to pass
+    { 
+     1, 1, 1, 0, 0, 0, 0, 0, 0, // first 3 nodes dont see any other nodes (for now)
+     0, 1, 0, 0, 0, 0, 0, 0, 0, // this gives topology NODE --- AP --- NODE , nodes dont see each other 
+     0, 0, 1, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 1, 1, 1, 1, 1, 1,
+     0, 0, 0, 0, 1, 1, 1, 1, 1,
+     0, 0, 0, 0, 0, 1, 1, 1, 1,
+     0, 0, 0, 0, 0, 0, 1, 1, 1,
+     0, 0, 0, 0, 0, 0, 0, 1, 1,
+     0, 0, 0, 0, 0, 0, 0, 0, 1,
+    };
 
     // 0. Enable or disable CTS/RTS
     UintegerValue ctsThr = (enableCtsRts ? UintegerValue (10) : UintegerValue (2500));
@@ -68,7 +68,6 @@ int neigh_matrix[N_NODES][N_NODES] =
     std::vector<NodeContainer*> networks;
 // it means there should be 3 networks with 3 nodes each
     networks = {&nodes1, &nodes2, &nodes3};
-    std::vector<int> nodes_count = {3, 3, 3};
 
     DeviceTopology topo = DeviceTopology();
     // creates wifi networks with infrastructure (first node is ap)
@@ -171,6 +170,7 @@ int neigh_matrix[N_NODES][N_NODES] =
 
     // 11. Cleanup
     Simulator::Destroy ();
+    delete[] neigh_matrix;
 }
 
 int main (int argc, char **argv)

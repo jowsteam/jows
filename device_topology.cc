@@ -6,8 +6,6 @@ DeviceTopology::DeviceTopology(){
     ssid_suffix = 1;
 }
 
-
-
 NetDeviceContainer DeviceTopology::Create(NodeContainer& nodes, int n){
     nodes.Create (n);
 
@@ -128,8 +126,12 @@ NetDeviceContainer DeviceTopology::CreateInfra(NodeContainer& nodes, int n){
 std::vector<NetDeviceContainer> DeviceTopology::CreateInfra(
 	std::vector<NodeContainer*> node_vector, 
 	std::vector<int> nodes_count,
-	int neigh_matrix[N_NODES][N_NODES])
+	int *neigh_matrix)
 {
+    // calculate matrix size
+    int nodes_total;
+    for (int n : nodes_count)
+	nodes_total+= n;
     for (int i = 0; i < node_vector.size(); i++) {
     	node_vector[i]->Create(nodes_count[i]);
 
@@ -145,8 +147,9 @@ std::vector<NetDeviceContainer> DeviceTopology::CreateInfra(
     int nn = NodeList::GetNNodes();
     for (int i = 0; i < nn; ++i)
 	for (int j = i; j < nn; j ++)
-	    if ( neigh_matrix[i][j] != 0){
-		lossModel->SetLoss (NodeList::GetNode(i)->GetObject<MobilityModel>(), NodeList::GetNode(j)->GetObject<MobilityModel>(), 50);
+	    if ( *(neigh_matrix + 9*i + j) != 0){
+		lossModel->SetLoss (NodeList::GetNode(i)->GetObject<MobilityModel>(),
+				    NodeList::GetNode(j)->GetObject<MobilityModel>(), 50);
 	    }
 
     Ptr<YansWifiChannel> wifiChannel = CreateObject <YansWifiChannel> ();
