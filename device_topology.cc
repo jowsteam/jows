@@ -147,7 +147,7 @@ std::vector<NetDeviceContainer> DeviceTopology::CreateInfra(
     int nn = NodeList::GetNNodes();
     for (int i = 0; i < nn; ++i)
 	for (int j = i; j < nn; j ++)
-	    if ( *(neigh_matrix + 9*i + j) != 0){
+	    if ( *(neigh_matrix + nn*i + j) != 0){
 		lossModel->SetLoss (NodeList::GetNode(i)->GetObject<MobilityModel>(),
 				    NodeList::GetNode(j)->GetObject<MobilityModel>(), 50);
 	    }
