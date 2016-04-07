@@ -172,8 +172,10 @@ std::vector<NetDeviceContainer> DeviceTopology::CreateInfra(
 	wifiPhy.SetChannel (wifiChannel);
 
     //    wifiPhy.EnablePcap ("rtscts-pcap-node" , nodes);
-
-	NodeContainer sta_nodes ( nodes.Get(1), nodes.Get(2));
+	NodeContainer sta_nodes;
+	for (int j = 1; j < nodes.GetN(); j ++){
+	    sta_nodes.Add(nodes.Get(j));
+	}
 	WifiMacHelper wifiMac;
 	wifiMac.SetType ("ns3::StaWifiMac",
 			"Ssid", SsidValue (ssid),
