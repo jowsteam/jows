@@ -25,7 +25,6 @@
 #include "ns3/internet-module.h"
 #include "ns3/flow-monitor-module.h"
 #include "ns3/wifi-module.h"
-#include "device_topology.h"
 #include <vector>
 
 using namespace ns3;
