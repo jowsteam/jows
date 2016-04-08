@@ -17,18 +17,6 @@
  *
  * Authors: Pavel Boyko <boyko@iitp.ru>
  */
-
-/*
- * Classical hidden terminal problem and its RTS/CTS solution.
- *
- * Topology: [node 0] <-- -50 dB --> [node 1] <-- -50 dB --> [node 2]
- * 
- * This example illustrates the use of 
- *  - Wifi in ad-hoc mode
- *  - Matrix propagation loss model
- *  - Use of OnOffApplication to generate CBR stream 
- *  - IP flow monitor
- */
 #include "ns3/core-module.h"
 #include "ns3/propagation-module.h"
 #include "ns3/network-module.h"
@@ -60,7 +48,9 @@ void experiment (bool enableCtsRts)
     { 0, 0, 0, 0, 0, 0, 0, 1, 1},
     { 0, 0, 0, 0, 0, 0, 0, 0, 1},
     };
-
+    const int start_time = 1;
+    const int end_time = 31;
+    const int total_time = end_time - start_time;
     // 0. Enable or disable CTS/RTS
     UintegerValue ctsThr = (enableCtsRts ? UintegerValue (10) : UintegerValue (2500));
     Config::SetDefault ("ns3::WifiRemoteStationManager::RtsCtsThreshold", ctsThr);
@@ -164,7 +154,7 @@ void experiment (bool enableCtsRts)
 	onOffHelper.SetAttribute ("OnTime",  StringValue ("ns3::ConstantRandomVariable[Constant=1]"));
 	onOffHelper.SetAttribute ("OffTime", StringValue ("ns3::ConstantRandomVariable[Constant=0]"));
 	// flow 1:  node 0 -> node 1
-	onOffHelper.SetAttribute ("DataRate", StringValue ("300000bps"));
+	onOffHelper.SetAttribute ("DataRate", StringValue ("2000000bps"));
 	onOffHelper.SetAttribute ("StartTime", TimeValue (Seconds (1.000000+0.002*i)));
 	cbrApps.Add (onOffHelper.Install (nodes->Get (1))); 
 
@@ -173,7 +163,7 @@ void experiment (bool enableCtsRts)
 	* The slightly different start times and data rates are a workaround
 	* for \bugid{388} and \bugid{912}
 	*/
-	onOffHelper.SetAttribute ("DataRate", StringValue ("301100bps"));
+	onOffHelper.SetAttribute ("DataRate", StringValue ("2001100bps"));
 	onOffHelper.SetAttribute ("StartTime", TimeValue (Seconds (1.001+0.002*i)));
 	cbrApps.Add (onOffHelper.Install (nodes->Get (2))); 
 
@@ -200,7 +190,7 @@ void experiment (bool enableCtsRts)
     Ptr<FlowMonitor> monitor = flowmon.InstallAll ();
 
     // 9. Run simulation for 10 seconds
-    Simulator::Stop (Seconds (10));
+    Simulator::Stop (Seconds (end_time));
     Simulator::Run ();
 
     // 10. Print per flow statistics
@@ -221,10 +211,10 @@ void experiment (bool enableCtsRts)
 	  std::cout << "Flow " << i->first - 6 << " (" << t.sourceAddress << " -> " << t.destinationAddress << ")\n";
 //	  std::cout << "  Tx Packets: " << i->second.txPackets << "\n";
 //	  std::cout << "  Tx Bytes:   " << i->second.txBytes << "\n";
-	  std::cout << "  TxOffered:  " << i->second.txBytes * 8.0 / 9.0 / 1000 / 1000  << " Mbps\n";
+	  std::cout << "  TxOffered:  " << i->second.txBytes * 8.0 / total_time / 1000 / 1000  << " Mbps\n";
 //	  std::cout << "  Rx Packets: " << i->second.rxPackets << "\n";
 //	  std::cout << "  Rx Bytes:   " << i->second.rxBytes << "\n";
-	  std::cout << "  Throughput: " << i->second.rxBytes * 8.0 / 9.0 / 1000 / 1000  << " Mbps\n";
+	  std::cout << "  Throughput: " << i->second.rxBytes * 8.0 / total_time / 1000 / 1000  << " Mbps\n";
 	}
     }
 
