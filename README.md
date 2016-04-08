@@ -12,7 +12,7 @@ CXXFLAGS="-std=c++11" ./waf configure
 ~~~~
  * Copy this repo into scratch folder and run
 ~~~~
-git clone https://github.com/jowsteam/jows.git scratch/jows
+git clone --branch V1.1 https://github.com/jowsteam/jows.git scratch/jows
 ./waf --run jows
 ~~~~
 
