@@ -37,9 +37,9 @@ void experiment (bool enableCtsRts)
     int neigh_matrix[nodes_total][nodes_total] =
     // should be triangular matrix with 1 on diagonal, values below diagonal will be ignored, represented in 1D so it is easier to pass
     { 
-    { 1, 1, 1, 1, 1, 1, 0, 0, 0}, 
-    { 0, 1, 1, 1, 1, 1, 0, 0, 0}, 
-    { 0, 0, 1, 1, 1, 1, 0, 0, 0},
+    { 1, 1, 1, 1, 1, 1, 1, 1, 1}, 
+    { 0, 1, 1, 1, 1, 1, 1, 1, 1}, 
+    { 0, 0, 1, 1, 1, 1, 1, 1, 1},
     { 0, 0, 0, 1, 1, 1, 1, 1, 1},
     { 0, 0, 0, 0, 1, 1, 1, 1, 1},
     { 0, 0, 0, 0, 0, 1, 1, 1, 1},
@@ -48,7 +48,7 @@ void experiment (bool enableCtsRts)
     { 0, 0, 0, 0, 0, 0, 0, 0, 1},
     };
     const int start_time = 1;
-    const int end_time = 31;
+    const int end_time = 11;
     const int total_time = end_time - start_time;
     // 0. Enable or disable CTS/RTS
     UintegerValue ctsThr = (enableCtsRts ? UintegerValue (10) : UintegerValue (2500));
@@ -94,28 +94,42 @@ void experiment (bool enableCtsRts)
 	ss << ssid_suffix++;
 	ssidString += ss.str ();
 	Ssid ssid = Ssid (ssidString);
-	
-	wifi.SetStandard (WIFI_PHY_STANDARD_80211b);
-	wifi.SetRemoteStationManager ("ns3::ConstantRateWifiManager",
-				    "DataMode",StringValue ("DsssRate2Mbps"), 
-				    "ControlMode",StringValue ("DsssRate1Mbps"));
+        bool run_ac = false; // dont change, doesnt work lul
+	if (run_ac) {
+                wifi.SetStandard (WIFI_PHY_STANDARD_80211ac);
+              wifi.SetRemoteStationManager ("ns3::ConstantRateWifiManager",
+                                    "DataMode", StringValue ("VhtMcs9"),
+                                    "ControlMode", StringValue ("VhtMcs0")
+            );
+        } else {
 
+            wifi.SetStandard (WIFI_PHY_STANDARD_80211b);
+              wifi.SetRemoteStationManager ("ns3::ConstantRateWifiManager",
+                                    "DataMode", StringValue ("DsssRate2Mbps"),
+                                    "ControlMode", StringValue ("DsssRate1Mbps")
+            );
+
+        }
 	YansWifiPhyHelper wifiPhy =  YansWifiPhyHelper::Default ();
 	wifiPhy.SetChannel (wifiChannel);
 
     //    wifiPhy.EnablePcap ("rtscts-pcap-node" , nodes);
+        if (run_ac){
+            wifiPhy.Set ("ShortGuardEnabled", BooleanValue(true));
+            wifiPhy.Set ("TxAntennas", UintegerValue (2));
+            wifiPhy.Set ("RxAntennas", UintegerValue (2));
+            wifiPhy.Set ("GreenfieldEnabled",BooleanValue(true));
+        }
 	NodeContainer sta_nodes;
 	for (int j = 1; j < nodes->GetN(); j ++){
 	    sta_nodes.Add(nodes->Get(j));
 	}
 	WifiMacHelper wifiMac;
-	wifiMac.SetType ("ns3::StaWifiMac",
-			"Ssid", SsidValue (ssid),
-			"ActiveProbing", BooleanValue (false)
-			);
-
+        wifiMac.SetType ("ns3::StaWifiMac",
+                      "Ssid", SsidValue (ssid),
+                      "ActiveProbing", BooleanValue (false));
 	NetDeviceContainer staDevices = wifi.Install (wifiPhy, wifiMac, sta_nodes);
-	
+
 	wifiMac.SetType ("ns3::ApWifiMac",
 			"Ssid", SsidValue (ssid),
 			"BeaconGeneration", BooleanValue (true),
@@ -145,15 +159,27 @@ void experiment (bool enableCtsRts)
 	ipv4.SetBase (addr0, "255.255.255.0");
 	ipv4.Assign (devices);
 
-	// 7. Install applications: two CBR streams each saturating the channel 
-	ApplicationContainer cbrApps;
+	// 7. Install applications	
+        ApplicationContainer cbrApps;
 	uint16_t cbrPort = 12345;
+
+        double mean = 5.0;
+        double variance = 2.0;
+
+        Ptr<NormalRandomVariable> x = CreateObject<NormalRandomVariable> ();
+        x->SetAttribute ("Mean", DoubleValue (mean));
+        x->SetAttribute ("Variance", DoubleValue (variance));
+
 	OnOffHelper onOffHelper ("ns3::UdpSocketFactory", InetSocketAddress (Ipv4Address (addr1), cbrPort));
 	onOffHelper.SetAttribute ("PacketSize", UintegerValue (1400));
-	onOffHelper.SetAttribute ("OnTime",  StringValue ("ns3::ConstantRandomVariable[Constant=1]"));
-	onOffHelper.SetAttribute ("OffTime", StringValue ("ns3::ConstantRandomVariable[Constant=0]"));
+	onOffHelper.SetAttribute ("OnTime",  StringValue ("ns3::NormalRandomVariable[Mean=0.5|Variance=0.3|Bound=0.4]"));
+	onOffHelper.SetAttribute ("OffTime", StringValue ("ns3::NormalRandomVariable[Mean=0.5|Variance=0.3|Bound=0.4]"));
 	// flow 1:  node 0 -> node 1
-	onOffHelper.SetAttribute ("DataRate", StringValue ("2000000bps"));
+        char data_rate1[50];
+        char data_rate2[50];
+	sprintf(data_rate1,"5%d0000bps",2*i);
+	sprintf(data_rate2,"5%d0%d00bps",2*i+1,2*i+1);
+	onOffHelper.SetAttribute ("DataRate", StringValue (data_rate1));
 	onOffHelper.SetAttribute ("StartTime", TimeValue (Seconds (1.000000+0.002*i)));
 	cbrApps.Add (onOffHelper.Install (nodes->Get (1))); 
 
@@ -162,7 +188,7 @@ void experiment (bool enableCtsRts)
 	* The slightly different start times and data rates are a workaround
 	* for \bugid{388} and \bugid{912}
 	*/
-	onOffHelper.SetAttribute ("DataRate", StringValue ("2001100bps"));
+	onOffHelper.SetAttribute ("DataRate", StringValue (data_rate2));
 	onOffHelper.SetAttribute ("StartTime", TimeValue (Seconds (1.001+0.002*i)));
 	cbrApps.Add (onOffHelper.Install (nodes->Get (2))); 
 
@@ -216,7 +242,11 @@ void experiment (bool enableCtsRts)
 	  std::cout << "  Throughput: " << i->second.rxBytes * 8.0 / total_time / 1000 / 1000  << " Mbps\n";
 	}
     }
-
+    if (enableCtsRts)
+        monitor->SerializeToXmlFile("Stats_enabled.xml",true,true);
+    else
+        monitor->SerializeToXmlFile("Stats_disabled.xml",true,true);
+        
     // 11. Cleanup
     Simulator::Destroy ();
 }
