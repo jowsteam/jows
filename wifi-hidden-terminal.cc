@@ -37,9 +37,9 @@ void experiment (bool enableCtsRts)
     int neigh_matrix[nodes_total][nodes_total] =
     // should be triangular matrix with 1 on diagonal, values below diagonal will be ignored, represented in 1D so it is easier to pass
     { 
-    { 1, 1, 1, 1, 1, 1, 1, 1, 1}, 
-    { 0, 1, 1, 1, 1, 1, 1, 1, 1}, 
-    { 0, 0, 1, 1, 1, 1, 1, 1, 1},
+    { 1, 1, 1, 1, 1, 1, 0, 0, 0}, 
+    { 0, 1, 1, 1, 1, 1, 0, 0, 0}, 
+    { 0, 0, 1, 1, 1, 1, 0, 0, 0},
     { 0, 0, 0, 1, 1, 1, 1, 1, 1},
     { 0, 0, 0, 0, 1, 1, 1, 1, 1},
     { 0, 0, 0, 0, 0, 1, 1, 1, 1},
@@ -48,7 +48,7 @@ void experiment (bool enableCtsRts)
     { 0, 0, 0, 0, 0, 0, 0, 0, 1},
     };
     const int start_time = 1;
-    const int end_time = 11;
+    const int end_time = 101;
     const int total_time = end_time - start_time;
     // 0. Enable or disable CTS/RTS
     UintegerValue ctsThr = (enableCtsRts ? UintegerValue (10) : UintegerValue (2500));
@@ -163,24 +163,22 @@ void experiment (bool enableCtsRts)
         ApplicationContainer cbrApps;
 	uint16_t cbrPort = 12345;
 
-        double mean = 5.0;
-        double variance = 2.0;
-
-        Ptr<NormalRandomVariable> x = CreateObject<NormalRandomVariable> ();
-        x->SetAttribute ("Mean", DoubleValue (mean));
-        x->SetAttribute ("Variance", DoubleValue (variance));
-
 	OnOffHelper onOffHelper ("ns3::UdpSocketFactory", InetSocketAddress (Ipv4Address (addr1), cbrPort));
 	onOffHelper.SetAttribute ("PacketSize", UintegerValue (1400));
-	onOffHelper.SetAttribute ("OnTime",  StringValue ("ns3::NormalRandomVariable[Mean=0.5|Variance=0.3|Bound=0.4]"));
-	onOffHelper.SetAttribute ("OffTime", StringValue ("ns3::NormalRandomVariable[Mean=0.5|Variance=0.3|Bound=0.4]"));
+	onOffHelper.SetAttribute ("OnTime",  StringValue ("ns3::ConstantRandomVariable[Constant=1]"));
+	onOffHelper.SetAttribute ("OffTime", StringValue ("ns3::ConstantRandomVariable[Constant=0]"));
+//	onOffHelper.SetAttribute ("OnTime",  StringValue ("ns3::NormalRandomVariable[Mean=0.5|Variance=0.3|Bound=0.1]"));
+//	onOffHelper.SetAttribute ("OffTime", StringValue ("ns3::NormalRandomVariable[Mean=0.5|Variance=0.3|Bound=0.1]"));
+//	onOffHelper.SetAttribute ("OnTime",  StringValue ("ns3::ExponentialRandomVariable[Mean=0.04]"));
+//	onOffHelper.SetAttribute ("OffTime", StringValue ("ns3::ExponentialRandomVariable[Mean=0.04]"));
+
 	// flow 1:  node 0 -> node 1
         char data_rate1[50];
         char data_rate2[50];
-	sprintf(data_rate1,"5%d0000bps",2*i);
-	sprintf(data_rate2,"5%d0%d00bps",2*i+1,2*i+1);
+	sprintf(data_rate1,"5%d000bps",2*i);
+	sprintf(data_rate2,"5%d0%d0bps",2*i+1,2*i+1);
 	onOffHelper.SetAttribute ("DataRate", StringValue (data_rate1));
-	onOffHelper.SetAttribute ("StartTime", TimeValue (Seconds (1.000000+0.002*i)));
+	onOffHelper.SetAttribute ("StartTime", TimeValue (Seconds (1.0+i)));
 	cbrApps.Add (onOffHelper.Install (nodes->Get (1))); 
 
 	// flow 2:  node 2 -> node 1
@@ -189,7 +187,7 @@ void experiment (bool enableCtsRts)
 	* for \bugid{388} and \bugid{912}
 	*/
 	onOffHelper.SetAttribute ("DataRate", StringValue (data_rate2));
-	onOffHelper.SetAttribute ("StartTime", TimeValue (Seconds (1.001+0.002*i)));
+	onOffHelper.SetAttribute ("StartTime", TimeValue (Seconds (1.1+i)));
 	cbrApps.Add (onOffHelper.Install (nodes->Get (2))); 
 
 	/** \internal
@@ -205,9 +203,9 @@ void experiment (bool enableCtsRts)
 	ApplicationContainer pingApps;
 
 	// again using different start times to workaround Bug 388 and Bug 912
-	echoClientHelper.SetAttribute ("StartTime", TimeValue (Seconds (0.001+0.01*i)));
+	echoClientHelper.SetAttribute ("StartTime", TimeValue (Seconds (0.01+0.1*i)));
 	pingApps.Add (echoClientHelper.Install (nodes->Get (1))); 
-	echoClientHelper.SetAttribute ("StartTime", TimeValue (Seconds (0.006+0.01*i)));
+	echoClientHelper.SetAttribute ("StartTime", TimeValue (Seconds (0.06+0.1*i)));
 	pingApps.Add (echoClientHelper.Install (nodes->Get (2)));
     }
     // 8. Install FlowMonitor on all nodes
@@ -224,12 +222,7 @@ void experiment (bool enableCtsRts)
     FlowMonitor::FlowStatsContainer stats = monitor->GetFlowStats ();
     for (std::map<FlowId, FlowMonitor::FlowStats>::const_iterator i = stats.begin (); i != stats.end (); ++i)
     {
-      // first 2 FlowIds are for ECHO apps, we don't want to display them
-      //
-      // Duration for throughput measurement is 9.0 seconds, since 
-      //   StartTime of the OnOffApplication is at about "second 1"
-      // and 
-      //   Simulator::Stops at "second 10".
+      // first 6 FlowIds are for ECHO apps, we don't want to display them
       if (i->first >6)
 	{
 	  Ipv4FlowClassifier::FiveTuple t = classifier->FindFlow (i->first);

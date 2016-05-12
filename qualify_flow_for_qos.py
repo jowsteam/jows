@@ -34,20 +34,20 @@ class QosClassifier (object):
             mean = value_sum/count
             if mean > treshold.get_mean():
                 passes = False
-#                print "Mean: ", mean, "\tTreshold:", treshold.get_mean()
+#            print "Mean: %.4f\tTreshold: %.4f" % (mean, treshold.get_mean())
         except:
             pass
         return passes
 class VoiceQosClassifier (QosClassifier):
     def __init__(self):
         super(VoiceQosClassifier, self).__init__()
-        self.delay_tresholds.set_mean_treshold(0.05)
-        self.jitter_tresholds.set_mean_treshold(0.02)
+        self.delay_tresholds.set_mean_treshold(0.1)
+        self.jitter_tresholds.set_mean_treshold(0.03)
 class VideoQosClassifier (QosClassifier):
     def __init__(self):
         super(VideoQosClassifier, self).__init__()
-        self.delay_tresholds.set_mean_treshold(0.5)
-        self.jitter_tresholds.set_mean_treshold(0.1)
+        self.delay_tresholds.set_mean_treshold(0.3)
+#        self.jitter_tresholds.set_mean_treshold(10)
 
 class FlowObject(object):
     ''' Manages flow object, 
@@ -100,7 +100,7 @@ class FlowObject(object):
     def packet_loss(self):
         if self.tx_packets<1:
             return 0.0
-        return float(self.lost_packets)/self.tx_packets
+        return float(self.tx_packets - self.rx_packets)/self.tx_packets
         
 
     def add_5tuple(self, xml_5tuple):
@@ -108,12 +108,20 @@ class FlowObject(object):
 
     def suitable_for_qos(self, qos_classifier):
         passes = True
-        if not qos_classifier.histogram_suitable( self.delay_dict, qos_classifier.delay_tresholds):
+        if not self.delay_suitable(qos_classifier):
             passes = False
-        if not qos_classifier.histogram_suitable( self.jitter_dict, qos_classifier.jitter_tresholds):
+        if not self.jitter_suitable(qos_classifier):
             passes = False
         
         return passes
+
+    def jitter_suitable(self, qos_classifier):
+#        print '| Testing jitter: '
+        return qos_classifier.histogram_suitable(self.jitter_dict, qos_classifier.jitter_tresholds)
+    def delay_suitable(self, qos_classifier):
+#        print '| Testing delay: '
+        return qos_classifier.histogram_suitable(self.delay_dict, qos_classifier.delay_tresholds)
+
 
 if __name__=="__main__":
     tree = ET.parse(sys.argv[1])
@@ -130,9 +138,13 @@ if __name__=="__main__":
                     break
     voice = VoiceQosClassifier()
     video = VideoQosClassifier()
-    interesting_flows = flows[len(flows)/2:]
+    interesting_flows = flows[6:]
     for f in interesting_flows:
         print '=== Flow %d ===' % (f.id)
-        print 'packet loss: ', f.packet_loss
-        print 'suitable for voice?',f.suitable_for_qos(voice)
-        print 'suitable for video?',f.suitable_for_qos(video)
+#        print '| packet loss: %.2f%s' %(100*f.packet_loss, '%')
+#        print '## SUITABLE FOR VOICE? ##'
+        if f.suitable_for_qos(voice): print 'OK'
+        else: print 'NOT OK'
+#        print '## SUITABLE FOR VIDEO? ##'
+        if f.suitable_for_qos(video): print 'OK'
+        else: print 'NOT OK'
