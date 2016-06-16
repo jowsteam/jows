@@ -34,7 +34,7 @@ class QosClassifier (object):
             mean = value_sum/count
             if mean > treshold.get_mean():
                 passes = False
-#            print "Mean: %.4f\tTreshold: %.4f" % (mean, treshold.get_mean())
+#            print "Mean: %.4f" % (mean)
         except:
             pass
         return passes
@@ -43,12 +43,13 @@ class VoiceQosClassifier (QosClassifier):
         super(VoiceQosClassifier, self).__init__()
         self.delay_tresholds.set_mean_treshold(0.1)
         self.jitter_tresholds.set_mean_treshold(0.03)
+        self.packet_loss = 0.01;
 class VideoQosClassifier (QosClassifier):
     def __init__(self):
         super(VideoQosClassifier, self).__init__()
         self.delay_tresholds.set_mean_treshold(0.3)
 #        self.jitter_tresholds.set_mean_treshold(10)
-
+        self.packet_loss = 0.05;
 class FlowObject(object):
     ''' Manages flow object, 
     classifies (using QosClassifier objects) if suitable for given QoS application
@@ -74,6 +75,20 @@ class FlowObject(object):
         return delay_dict
 
     @property
+    def mean_delay(self):
+        count = 0
+        value_sum = 0
+        histogram = self.delay_dict
+        for k,v in histogram.iteritems():
+            count += v # number of total packets
+            value_sum += k*v # weighted value with number packets
+        try:
+            mean = value_sum/count
+        except:
+            pass
+        return mean
+        
+    @property
     def jitter_hist(self):
         return self._xml.find('jitterHistogram')
     @property
@@ -85,6 +100,20 @@ class FlowObject(object):
             value = int(bbin.attrib['count'])
             jitter_dict[key] = value
         return jitter_dict
+
+    @property
+    def mean_jitter(self):
+        count = 0
+        value_sum = 0
+        histogram = self.jitter_dict
+        for k,v in histogram.iteritems():
+            count += v # number of total packets
+            value_sum += k*v # weighted value with number packets
+        try:
+            mean = value_sum/count
+        except:
+            pass
+        return mean
 
     @property
     def tx_packets(self):
@@ -112,7 +141,7 @@ class FlowObject(object):
             passes = False
         if not self.jitter_suitable(qos_classifier):
             passes = False
-        
+        print ('%s\t%s\t\t%s' % (self.packet_loss<qos_classifier.packet_loss, self.delay_suitable(qos_classifier), self.jitter_suitable(qos_classifier)) )
         return passes
 
     def jitter_suitable(self, qos_classifier):
@@ -140,11 +169,7 @@ if __name__=="__main__":
     video = VideoQosClassifier()
     interesting_flows = flows[6:]
     for f in interesting_flows:
-        print '=== Flow %d ===' % (f.id)
-#        print '| packet loss: %.2f%s' %(100*f.packet_loss, '%')
-#        print '## SUITABLE FOR VOICE? ##'
-        if f.suitable_for_qos(voice): print 'OK'
-        else: print 'NOT OK'
-#        print '## SUITABLE FOR VIDEO? ##'
-        if f.suitable_for_qos(video): print 'OK'
-        else: print 'NOT OK'
+        print '=== Flow %d ===' % (f.id -6 )
+        print '%.2f%s\t%.4f ms\t%.4f ms' %(100*f.packet_loss, '%', f.mean_delay, f.mean_jitter)
+        f.suitable_for_qos(voice)
+        f.suitable_for_qos(video)

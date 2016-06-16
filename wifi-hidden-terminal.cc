@@ -165,18 +165,18 @@ void experiment (bool enableCtsRts)
 
 	OnOffHelper onOffHelper ("ns3::UdpSocketFactory", InetSocketAddress (Ipv4Address (addr1), cbrPort));
 	onOffHelper.SetAttribute ("PacketSize", UintegerValue (1400));
-	onOffHelper.SetAttribute ("OnTime",  StringValue ("ns3::ConstantRandomVariable[Constant=1]"));
-	onOffHelper.SetAttribute ("OffTime", StringValue ("ns3::ConstantRandomVariable[Constant=0]"));
+//	onOffHelper.SetAttribute ("OnTime",  StringValue ("ns3::ConstantRandomVariable[Constant=1]"));
+//	onOffHelper.SetAttribute ("OffTime", StringValue ("ns3::ConstantRandomVariable[Constant=0]"));
 //	onOffHelper.SetAttribute ("OnTime",  StringValue ("ns3::NormalRandomVariable[Mean=0.5|Variance=0.3|Bound=0.1]"));
 //	onOffHelper.SetAttribute ("OffTime", StringValue ("ns3::NormalRandomVariable[Mean=0.5|Variance=0.3|Bound=0.1]"));
-//	onOffHelper.SetAttribute ("OnTime",  StringValue ("ns3::ExponentialRandomVariable[Mean=0.04]"));
-//	onOffHelper.SetAttribute ("OffTime", StringValue ("ns3::ExponentialRandomVariable[Mean=0.04]"));
+	onOffHelper.SetAttribute ("OnTime",  StringValue ("ns3::ExponentialRandomVariable[Mean=0.04]"));
+	onOffHelper.SetAttribute ("OffTime", StringValue ("ns3::ExponentialRandomVariable[Mean=0.04]"));
 
 	// flow 1:  node 0 -> node 1
         char data_rate1[50];
         char data_rate2[50];
-	sprintf(data_rate1,"5%d000bps",2*i);
-	sprintf(data_rate2,"5%d0%d0bps",2*i+1,2*i+1);
+	sprintf(data_rate1,"5%d0000bps",2*i);
+	sprintf(data_rate2,"5%d0%d00bps",2*i+1,2*i+1);
 	onOffHelper.SetAttribute ("DataRate", StringValue (data_rate1));
 	onOffHelper.SetAttribute ("StartTime", TimeValue (Seconds (1.0+i)));
 	cbrApps.Add (onOffHelper.Install (nodes->Get (1))); 
