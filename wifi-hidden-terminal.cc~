@@ -37,55 +37,9 @@ void experiment (bool enableCtsRts)
     int neigh_matrix[nodes_total][nodes_total] =
     // should be triangular matrix with 1 on diagonal, values below diagonal will be ignored, represented in 1D so it is easier to pass
     { 
-    // { 1, 1, 1, 1, 1, 1, 0, 0, 0}, 
-    // { 0, 1, 1, 1, 1, 1, 0, 0, 0}, 
-    // { 0, 0, 1, 1, 1, 1, 0, 0, 0},
-    // { 0, 0, 0, 1, 1, 1, 1, 1, 1},
-    // { 0, 0, 0, 0, 1, 1, 1, 1, 1},
-    // { 0, 0, 0, 0, 0, 1, 1, 1, 1},
-    // { 0, 0, 0, 0, 0, 0, 1, 1, 1},
-    // { 0, 0, 0, 0, 0, 0, 0, 1, 1},
-    // { 0, 0, 0, 0, 0, 0, 0, 0, 1},
-
-
-    // network2 can see only AP from network1 and the whole network3
-    // { 1, 1, 1, 1, 1, 1, 0, 0, 0},  
-    // { 0, 1, 1, 0, 0, 0, 0, 0, 0}, 
-    // { 0, 0, 1, 0, 0, 0, 0, 0, 0},
-    // { 0, 0, 0, 1, 1, 1, 1, 1, 1},
-    // { 0, 0, 0, 0, 1, 1, 1, 1, 1},
-    // { 0, 0, 0, 0, 0, 1, 1, 1, 1},
-    // { 0, 0, 0, 0, 0, 0, 1, 1, 1},
-    // { 0, 0, 0, 0, 0, 0, 0, 1, 1},
-    // { 0, 0, 0, 0, 0, 0, 0, 0, 1},
- 
- 	// network2 can see AP and 1 STA from network1 and the whole network3
-    // { 1, 1, 1, 1, 1, 1, 0, 0, 0}, 
-    // { 0, 1, 1, 1, 0, 0, 0, 0, 0}, 
-    // { 0, 0, 1, 0, 0, 0, 0, 0, 0},
-    // { 0, 0, 0, 1, 1, 1, 1, 1, 1},
-    // { 0, 0, 0, 0, 1, 1, 1, 1, 1},
-    // { 0, 0, 0, 0, 0, 1, 1, 1, 1},
-    // { 0, 0, 0, 0, 0, 0, 1, 1, 1},
-    // { 0, 0, 0, 0, 0, 0, 0, 1, 1},
-    // { 0, 0, 0, 0, 0, 0, 0, 0, 1},
-
- 	// network2 can see only 1 STA from network1 and the whole network3
-    // { 1, 1, 1, 0, 0, 0, 0, 0, 0}, 
-    // { 0, 1, 1, 0, 0, 0, 0, 0, 0}, 
-    // { 0, 0, 1, 1, 1, 1, 0, 0, 0},
-    // { 0, 0, 0, 1, 1, 1, 1, 1, 1},
-    // { 0, 0, 0, 0, 1, 1, 1, 1, 1},
-    // { 0, 0, 0, 0, 0, 1, 1, 1, 1},
-    // { 0, 0, 0, 0, 0, 0, 1, 1, 1},
-    // { 0, 0, 0, 0, 0, 0, 0, 1, 1},
-    // { 0, 0, 0, 0, 0, 0, 0, 0, 1},
-
-
- 	// AP from network1 can see AP from network2 and AP from network3
-    { 1, 1, 1, 1, 0, 0, 1, 0, 0}, 
-    { 0, 1, 1, 0, 0, 0, 0, 0, 0}, 
-    { 0, 0, 1, 0, 0, 0, 0, 0, 0},
+    { 1, 1, 1, 1, 1, 1, 0, 0, 0}, 
+    { 0, 1, 1, 1, 1, 1, 0, 0, 0}, 
+    { 0, 0, 1, 1, 1, 1, 0, 0, 0},
     { 0, 0, 0, 1, 1, 1, 1, 1, 1},
     { 0, 0, 0, 0, 1, 1, 1, 1, 1},
     { 0, 0, 0, 0, 0, 1, 1, 1, 1},
@@ -93,12 +47,8 @@ void experiment (bool enableCtsRts)
     { 0, 0, 0, 0, 0, 0, 0, 1, 1},
     { 0, 0, 0, 0, 0, 0, 0, 0, 1},
     };
-
-    
-
-
     const int start_time = 1;
-    const int end_time = 101;
+    const int end_time = 31;
     const int total_time = end_time - start_time;
     // 0. Enable or disable CTS/RTS
     UintegerValue ctsThr = (enableCtsRts ? UintegerValue (10) : UintegerValue (2500));
@@ -144,42 +94,28 @@ void experiment (bool enableCtsRts)
 	ss << ssid_suffix++;
 	ssidString += ss.str ();
 	Ssid ssid = Ssid (ssidString);
-        bool run_ac = false; // dont change, doesnt work lul
-	if (run_ac) {
-                wifi.SetStandard (WIFI_PHY_STANDARD_80211ac);
-              wifi.SetRemoteStationManager ("ns3::ConstantRateWifiManager",
-                                    "DataMode", StringValue ("VhtMcs9"),
-                                    "ControlMode", StringValue ("VhtMcs0")
-            );
-        } else {
+	
+	wifi.SetStandard (WIFI_PHY_STANDARD_80211b);
+	wifi.SetRemoteStationManager ("ns3::ConstantRateWifiManager",
+				    "DataMode",StringValue ("DsssRate2Mbps"), 
+				    "ControlMode",StringValue ("DsssRate1Mbps"));
 
-            wifi.SetStandard (WIFI_PHY_STANDARD_80211b);
-              wifi.SetRemoteStationManager ("ns3::ConstantRateWifiManager",
-                                    "DataMode", StringValue ("DsssRate2Mbps"),
-                                    "ControlMode", StringValue ("DsssRate1Mbps")
-            );
-
-        }
 	YansWifiPhyHelper wifiPhy =  YansWifiPhyHelper::Default ();
 	wifiPhy.SetChannel (wifiChannel);
 
     //    wifiPhy.EnablePcap ("rtscts-pcap-node" , nodes);
-        if (run_ac){
-            wifiPhy.Set ("ShortGuardEnabled", BooleanValue(true));
-            wifiPhy.Set ("TxAntennas", UintegerValue (2));
-            wifiPhy.Set ("RxAntennas", UintegerValue (2));
-            wifiPhy.Set ("GreenfieldEnabled",BooleanValue(true));
-        }
 	NodeContainer sta_nodes;
 	for (int j = 1; j < nodes->GetN(); j ++){
 	    sta_nodes.Add(nodes->Get(j));
 	}
 	WifiMacHelper wifiMac;
-        wifiMac.SetType ("ns3::StaWifiMac",
-                      "Ssid", SsidValue (ssid),
-                      "ActiveProbing", BooleanValue (false));
-	NetDeviceContainer staDevices = wifi.Install (wifiPhy, wifiMac, sta_nodes);
+	wifiMac.SetType ("ns3::StaWifiMac",
+			"Ssid", SsidValue (ssid),
+			"ActiveProbing", BooleanValue (false)
+			);
 
+	NetDeviceContainer staDevices = wifi.Install (wifiPhy, wifiMac, sta_nodes);
+	
 	wifiMac.SetType ("ns3::ApWifiMac",
 			"Ssid", SsidValue (ssid),
 			"BeaconGeneration", BooleanValue (true),
@@ -209,26 +145,16 @@ void experiment (bool enableCtsRts)
 	ipv4.SetBase (addr0, "255.255.255.0");
 	ipv4.Assign (devices);
 
-	// 7. Install applications	
-        ApplicationContainer cbrApps;
+	// 7. Install applications: two CBR streams each saturating the channel 
+	ApplicationContainer cbrApps;
 	uint16_t cbrPort = 12345;
-
 	OnOffHelper onOffHelper ("ns3::UdpSocketFactory", InetSocketAddress (Ipv4Address (addr1), cbrPort));
 	onOffHelper.SetAttribute ("PacketSize", UintegerValue (1400));
-//	onOffHelper.SetAttribute ("OnTime",  StringValue ("ns3::ConstantRandomVariable[Constant=1]"));
-//	onOffHelper.SetAttribute ("OffTime", StringValue ("ns3::ConstantRandomVariable[Constant=0]"));
-//	onOffHelper.SetAttribute ("OnTime",  StringValue ("ns3::NormalRandomVariable[Mean=0.5|Variance=0.3|Bound=0.1]"));
-//	onOffHelper.SetAttribute ("OffTime", StringValue ("ns3::NormalRandomVariable[Mean=0.5|Variance=0.3|Bound=0.1]"));
-	onOffHelper.SetAttribute ("OnTime",  StringValue ("ns3::ExponentialRandomVariable[Mean=0.04]"));
-	onOffHelper.SetAttribute ("OffTime", StringValue ("ns3::ExponentialRandomVariable[Mean=0.04]"));
-
+	onOffHelper.SetAttribute ("OnTime",  StringValue ("ns3::ConstantRandomVariable[Constant=1]"));
+	onOffHelper.SetAttribute ("OffTime", StringValue ("ns3::ConstantRandomVariable[Constant=0]"));
 	// flow 1:  node 0 -> node 1
-        char data_rate1[50];
-        char data_rate2[50];
-	sprintf(data_rate1,"5%d0000bps",2*i);
-	sprintf(data_rate2,"5%d0%d00bps",2*i+1,2*i+1);
-	onOffHelper.SetAttribute ("DataRate", StringValue (data_rate1));
-	onOffHelper.SetAttribute ("StartTime", TimeValue (Seconds (1.0+i)));
+	onOffHelper.SetAttribute ("DataRate", StringValue ("2000000bps"));
+	onOffHelper.SetAttribute ("StartTime", TimeValue (Seconds (1.000000+0.002*i)));
 	cbrApps.Add (onOffHelper.Install (nodes->Get (1))); 
 
 	// flow 2:  node 2 -> node 1
@@ -236,8 +162,8 @@ void experiment (bool enableCtsRts)
 	* The slightly different start times and data rates are a workaround
 	* for \bugid{388} and \bugid{912}
 	*/
-	onOffHelper.SetAttribute ("DataRate", StringValue (data_rate2));
-	onOffHelper.SetAttribute ("StartTime", TimeValue (Seconds (1.1+i)));
+	onOffHelper.SetAttribute ("DataRate", StringValue ("2001100bps"));
+	onOffHelper.SetAttribute ("StartTime", TimeValue (Seconds (1.001+0.002*i)));
 	cbrApps.Add (onOffHelper.Install (nodes->Get (2))); 
 
 	/** \internal
@@ -253,9 +179,9 @@ void experiment (bool enableCtsRts)
 	ApplicationContainer pingApps;
 
 	// again using different start times to workaround Bug 388 and Bug 912
-	echoClientHelper.SetAttribute ("StartTime", TimeValue (Seconds (0.01+0.1*i)));
+	echoClientHelper.SetAttribute ("StartTime", TimeValue (Seconds (0.001+0.01*i)));
 	pingApps.Add (echoClientHelper.Install (nodes->Get (1))); 
-	echoClientHelper.SetAttribute ("StartTime", TimeValue (Seconds (0.06+0.1*i)));
+	echoClientHelper.SetAttribute ("StartTime", TimeValue (Seconds (0.006+0.01*i)));
 	pingApps.Add (echoClientHelper.Install (nodes->Get (2)));
     }
     // 8. Install FlowMonitor on all nodes
@@ -272,7 +198,12 @@ void experiment (bool enableCtsRts)
     FlowMonitor::FlowStatsContainer stats = monitor->GetFlowStats ();
     for (std::map<FlowId, FlowMonitor::FlowStats>::const_iterator i = stats.begin (); i != stats.end (); ++i)
     {
-      // first 6 FlowIds are for ECHO apps, we don't want to display them
+      // first 2 FlowIds are for ECHO apps, we don't want to display them
+      //
+      // Duration for throughput measurement is 9.0 seconds, since 
+      //   StartTime of the OnOffApplication is at about "second 1"
+      // and 
+      //   Simulator::Stops at "second 10".
       if (i->first >6)
 	{
 	  Ipv4FlowClassifier::FiveTuple t = classifier->FindFlow (i->first);
@@ -285,11 +216,7 @@ void experiment (bool enableCtsRts)
 	  std::cout << "  Throughput: " << i->second.rxBytes * 8.0 / total_time / 1000 / 1000  << " Mbps\n";
 	}
     }
-    if (enableCtsRts)
-        monitor->SerializeToXmlFile("Stats_enabled.xml",true,true);
-    else
-        monitor->SerializeToXmlFile("Stats_disabled.xml",true,true);
-        
+
     // 11. Cleanup
     Simulator::Destroy ();
 }
